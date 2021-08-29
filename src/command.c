@@ -71,6 +71,22 @@ void command_scrsize(char (*token)[50]) {
     uart_puts("\n");
 }
 
+void command_clrscr() {
+    /*
+        Clear all pixel of the display to default color
+    */
+    clear_display();
+}
+
+void command_txt() {
+    /*
+        Display name of team member in 3 different color
+    */
+	drawString(20, 20, "Dang Truong Nguyen Long", 0x00FFFFFF, 4);
+	drawString(20, 100, "Le Ngoc Duy", 0x006800FF, 4);
+	drawString(20, 180, "Phan Quoc Binh", 0x00BD1E13, 4);
+}
+
 void interpret_command(char* command) {
     char command_token[20][50];
     for (int i = 0; i < 20; i++) {
@@ -84,6 +100,10 @@ void interpret_command(char* command) {
         command_cls();
     } else if (str_compare(command_token[0], "scrsize")) {
         command_scrsize(command_token);
+    } else if (str_compare(command_token[0], "clrscr")) {
+        command_clrscr();
+    } else if (str_compare(command_token[0], "txt")) {
+        command_txt();
     } else {
         uart_puts("Command not recognize!\n");
         uart_puts("Type \"help\" to view all command\n\n");

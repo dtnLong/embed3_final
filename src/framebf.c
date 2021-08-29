@@ -275,7 +275,7 @@ void drawChar(unsigned char ch, int x, int y, unsigned int attr, int scale) {
             if (*glyph & bit_data) {
                 drawPixelARGB32(x+j, y+i, color);
             } else {
-                drawPixelARGB32(x+j, y+i, 0x00000000);
+                drawPixelARGB32(x+j, y+i, default_background_color);
             }
         }
 

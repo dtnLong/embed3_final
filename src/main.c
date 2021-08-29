@@ -10,9 +10,6 @@ void main() {
 
 	// Initialize frame buffer
 	framebf_init();
-	drawString(20, 20, "Dang Truong Nguyen Long", 0x00FFFFFF, 4);
-	drawString(20, 100, "Le Ngoc Duy", 0x006800FF, 4);
-	drawString(20, 180, "Phan Quoc Binh", 0x00BD1E13, 4);
 
 	// Print welcome message
 	uart_puts("d88888b d88888b d88888b d888888b .d888b.   j88D  .d888b.  .d88b. \n");
