@@ -87,6 +87,14 @@ void command_txt() {
 	drawString(20, 180, "Phan Quoc Binh", 0x00BD1E13, 4);
 }
 
+void command_smallimg() {
+    draw_small_image(0, 0);
+}
+
+void command_largeimg() {
+    draw_large_image_controller(0, 0);
+}
+
 void interpret_command(char* command) {
     char command_token[20][50];
     for (int i = 0; i < 20; i++) {
@@ -104,6 +112,10 @@ void interpret_command(char* command) {
         command_clrscr();
     } else if (str_compare(command_token[0], "txt")) {
         command_txt();
+    } else if (str_compare(command_token[0], "small_img")) {
+        command_smallimg();
+    } else if (str_compare(command_token[0], "large_img")) {
+        command_largeimg();
     } else {
         uart_puts("Command not recognize!\n");
         uart_puts("Type \"help\" to view all command\n\n");

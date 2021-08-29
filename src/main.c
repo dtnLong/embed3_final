@@ -28,6 +28,8 @@ void main() {
 	uart_puts("Y8888P' YP   YP 88   YD Y88888P    `Y88P'  `8888Y'\n");
 	uart_puts("\n");
 
+	wait_msec(2000);
+
 	uart_puts("\n");
 	uart_puts("MyBareOS>");
 	

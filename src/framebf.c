@@ -2,6 +2,8 @@
 #include "../include/mbox.h"
 #include "../include/uart.h"
 #include "../include/font.h"
+#include "../include/small_img.h"
+#include "../include/large_img.h"
 
 //Use RGBA32 (32 bits for each pixel)
 #define COLOR_DEPTH 32
@@ -316,3 +318,83 @@ void drawString(int x, int y, char *s, unsigned int attr, int scale) {
     }
 }
 
+void draw_small_image(int x, int y) {
+    /*
+        Draw image have width and height smaller than screen size
+    */
+    for (int i = 0; i <= SMALL_IMG_HEIGHT; i++) {
+        for (int j = 0; j <= SMALL_IMG_WIDTH; j++) {
+            drawPixelARGB32(x + j, y + i, small_img[SMALL_IMG_WIDTH * i + j]);
+        }
+    }
+}
+
+void draw_large_image(int x, int y, int start_y, int end_y) {
+    /*
+        Draw large image have width larger than screen size
+    */
+
+    for (int i = start_y; i <= end_y; i++) {
+        for (int j = 0; j <= LARGE_IMG_WIDTH; j++) {
+            drawPixelARGB32(x + j, y + i - start_y, large_img[LARGE_IMG_WIDTH * i + j]);
+        }
+    }
+}
+
+void draw_large_image_controller(int x, int y) {
+    char option = 0;
+    int y_displace = y;
+    if (y_displace < 0) {
+        draw_large_image(x, 0, -1 * y_displace, LARGE_IMG_HEIGHT);
+    } else if (y_displace + LARGE_IMG_HEIGHT > scr_height) {
+        draw_large_image(x, y_displace, 0, scr_height - y_displace);
+    } else {
+        draw_large_image(x, y_displace, 0, LARGE_IMG_HEIGHT);
+    }
+    while (option != 'q') {
+        option = uart_getc();
+        if (option == 'w') {
+            y_displace -= 20;
+            if (y_displace < 0) {
+                drawRectARGB32(0, y_displace + LARGE_IMG_HEIGHT, scr_width, scr_height, 0x00000000, 1);
+            } else if (y_displace + LARGE_IMG_HEIGHT > scr_height) {
+                drawRectARGB32(0, y_displace, scr_width, y_displace, 0x00000000, 1);
+            }
+
+            if (y_displace < 0) {
+                draw_large_image(x, 0, -1 * y_displace, LARGE_IMG_HEIGHT);
+            } else if (y_displace + LARGE_IMG_HEIGHT > scr_height) {
+                draw_large_image(x, y_displace, 0, scr_height - y_displace);
+            } else {
+                draw_large_image(x, y_displace, 0, LARGE_IMG_HEIGHT);
+            }
+        } else if (option == 's') {
+            y_displace += 20;
+            if (y_displace < 0) {
+                drawRectARGB32(0, y_displace + LARGE_IMG_HEIGHT, scr_width, scr_height, 0x00000000, 1);
+            } else if (y_displace + LARGE_IMG_HEIGHT > scr_height) {
+                drawRectARGB32(0, y_displace, scr_width, y_displace, 0x00000000, 1);
+            }
+
+            if (y_displace < 0) {
+                draw_large_image(x, 0, -1 * y_displace, LARGE_IMG_HEIGHT);
+            } else if (y_displace + LARGE_IMG_HEIGHT > scr_height) {
+                draw_large_image(x, y_displace, 0, scr_height - y_displace);
+            } else {
+                draw_large_image(x, y_displace, 0, LARGE_IMG_HEIGHT);
+            }
+        }
+    }
+}
+
+void wait_msec(unsigned int n) {
+    n *= 1000;
+    register unsigned long f, t, r;
+    // get the current counter frequency
+    asm volatile ("mrs %0, cntfrq_el0" : "=r"(f));
+    // read the current counter
+    asm volatile ("mrs %0, cntpct_el0" : "=r"(t));
+    // calculate expire value for counter
+    t+=((f/1000)*n)/1000;
+    do{asm volatile ("mrs %0, cntpct_el0" : "=r"(r));}while(r<t);
+}
