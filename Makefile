@@ -17,7 +17,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 
 $(BUILD_DIR)/kernel8.img: $(BUILD_DIR)/start.o $(OFILES)
 	aarch64-none-elf-ld $(LDFLAGS) $(BUILD_DIR)/start.o $(OFILES) -T $(SRC_DIR)/link.ld -o $(BUILD_DIR)/kernel8.elf
-	aarch64-none-elf-objcopy -O binary $(BUILD_DIR)/kernel8.elf kernel8.img
+	aarch64-none-elf-objcopy -O binary $(BUILD_DIR)/kernel8.elf $(BUILD_DIR)/kernel8.img
 
 clean:
 	del ${BUILD_DIR}\kernel8.elf ${BUILD_DIR}\*.o ${BUILD_DIR}\*.img

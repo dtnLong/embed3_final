@@ -95,6 +95,10 @@ void command_largeimg() {
     draw_large_image_controller(0, 0);
 }
 
+void command_video(){
+
+}
+
 void interpret_command(char* command) {
     char command_token[20][50];
     for (int i = 0; i < 20; i++) {
@@ -116,6 +120,9 @@ void interpret_command(char* command) {
         command_smallimg();
     } else if (str_compare(command_token[0], "large_img")) {
         command_largeimg();
+    } else if (str_compare(command_token[0], "video")){
+        uart_puts("Video command\n");
+        command_video();
     } else {
         uart_puts("Command not recognize!\n");
         uart_puts("Type \"help\" to view all command\n\n");
