@@ -59,7 +59,7 @@ void command_smallimg() {
 }
 
 void command_largeimg() {
-    draw_large_image_controller(0, 0);
+    image_viewer(0, 0);
 }
 
 void command_video(){

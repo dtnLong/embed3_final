@@ -6,5 +6,5 @@ void clear_display();
 void drawChar(unsigned char ch, int x, int y, unsigned int color, int scale);
 void drawString(int x, int y, char *s, unsigned int color, int scale);
 void draw_small_image(int x, int y);
-void draw_large_image_controller(int x, int y);
-void wait_msec(unsigned int n);
+void draw_large_image(int x, int y);
+void image_viewer(int x, int y);
