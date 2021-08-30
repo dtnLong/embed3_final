@@ -1,4 +1,3 @@
-// ----------------------------------- framebf.c -------------------------------------
 #include "../include/mbox.h"
 #include "../include/uart.h"
 #include "../include/font.h"
@@ -7,10 +6,13 @@
 
 //Use RGBA32 (32 bits for each pixel)
 #define COLOR_DEPTH 32
+
 //Pixel Order: BGR in memory order (little endian --> RGB in byte order)
 #define PIXEL_ORDER 0
+
 //Screen info
 unsigned int scr_width, scr_height, pitch;
+
 /* Frame buffer address
 * (declare as pointer of unsigned char to access each byte) */
 unsigned char *fb;
@@ -20,42 +22,50 @@ int default_background_color = 0x00000000;
 /**
 * Set screen resolution to 1024x768
 */
-void framebf_init() {
+void framebf_init(int width, int heigth) {
     mbox[0] = 35*4; // Length of message in bytes
     mbox[1] = MBOX_REQUEST;
+
     mbox[2] = MBOX_TAG_SETPHYWH; //Set physical width-height
     mbox[3] = 8; // Value size in bytes
     mbox[4] = 0; // REQUEST CODE = 0
-    mbox[5] = 1024; // Value(width)
-    mbox[6] = 768; // Value(height)
+    mbox[5] = width; // Value(width)
+    mbox[6] = heigth; // Value(height)
+
     mbox[7] = MBOX_TAG_SETVIRTWH; //Set virtual width-height
     mbox[8] = 8;
     mbox[9] = 0;
-    mbox[10] = 1024;
-    mbox[11] = 768;
+    mbox[10] = width;
+    mbox[11] = heigth;
+
     mbox[12] = MBOX_TAG_SETVIRTOFF; //Set virtual offset
     mbox[13] = 8;
     mbox[14] = 0;
     mbox[15] = 0; // x offset
     mbox[16] = 0; // y offset
+
     mbox[17] = MBOX_TAG_SETDEPTH; //Set color depth
     mbox[18] = 4;
     mbox[19] = 0;
     mbox[20] = COLOR_DEPTH; //Bits per pixel
+
     mbox[21] = MBOX_TAG_SETPXLORDR; //Set pixel order
     mbox[22] = 4;
     mbox[23] = 0;
     mbox[24] = PIXEL_ORDER;
+
     mbox[25] = MBOX_TAG_GETFB; //Get frame buffer
     mbox[26] = 8;
     mbox[27] = 0;
     mbox[28] = 16; //alignment in 16 bytes
     mbox[29] = 0; //will return Frame Buffer size in bytes
+
     mbox[30] = MBOX_TAG_GETPITCH; //Get pitch
     mbox[31] = 4;
     mbox[32] = 0;
     mbox[33] = 0; //Will get pitch value here
     mbox[34] = MBOX_TAG_LAST;
+
     // Call Mailbox
     if (mbox_call(ADDR(mbox), MBOX_CH_PROP) //mailbox call is successful ?
         && mbox[20] == COLOR_DEPTH //got correct color depth ?
@@ -108,135 +118,11 @@ void drawRectARGB32(int x1, int y1, int x2, int y2, unsigned int attr, int fill)
     }
 }
 
-void set_physical_size(int width, int height) {
-    mbox[0] = 30*4; // Length of message in bytes
-    mbox[1] = MBOX_REQUEST;
-
-    mbox[2] = MBOX_TAG_SETPHYWH; //Set physical width-height
-    mbox[3] = 8; // Value size in bytes
-    mbox[4] = 0; // REQUEST CODE = 0
-    mbox[5] = width; // Value(width)
-    mbox[6] = height; // Value(height)
-
-    mbox[7] = MBOX_TAG_SETVIRTOFF; //Set virtual offset
-    mbox[8] = 8;
-    mbox[9] = 0;
-    mbox[10] = 0; // x offset
-    mbox[11] = 0; // y offset
-
-    mbox[12] = MBOX_TAG_SETDEPTH; //Set color depth
-    mbox[13] = 4;
-    mbox[14] = 0;
-    mbox[15] = COLOR_DEPTH; //Bits per pixel
-
-    mbox[16] = MBOX_TAG_SETPXLORDR; //Set pixel order
-    mbox[17] = 4;
-    mbox[18] = 0;
-    mbox[19] = PIXEL_ORDER;
-
-    mbox[20] = MBOX_TAG_GETFB; //Get frame buffer
-    mbox[21] = 8;
-    mbox[22] = 0;
-    mbox[23] = 16; //alignment in 16 bytes
-    mbox[24] = 0; //will return Frame Buffer size in bytes
-
-    mbox[25] = MBOX_TAG_GETPITCH; //Get pitch
-    mbox[26] = 4;
-    mbox[27] = 0;
-    mbox[28] = 0; //Will get pitch value here
-
-    mbox[29] = MBOX_TAG_LAST;
-
-    // Call Mailbox
-    if (mbox_call(ADDR(mbox), MBOX_CH_PROP)
-        && mbox[15] == COLOR_DEPTH
-        && mbox[19] == PIXEL_ORDER
-        && mbox[23] != 0
-    ) {
-        mbox[26] &= 0x3FFFFFFF;
-        // Access frame buffer as 1 byte per each address
-        fb = (unsigned char *)((unsigned long)mbox[23]);
-        uart_puts("Got allocated Frame Buffer at RAM physical address: ");
-        uart_hex(mbox[23]);
-        uart_puts("\n");
-        uart_puts("Frame Buffer Size (bytes): ");
-        uart_dec(mbox[24]);
-        uart_puts("\n");
-
-        scr_width = mbox[5];
-        scr_height = mbox[6];
-        pitch = mbox[28];
-    } else {
-        uart_puts("Unable to get a frame buffer with provided setting\n");
-    }
-}
-
-void set_virtual_size(int width, int height) {
-    mbox[0] = 30*4; // Length of message in bytes
-    mbox[1] = MBOX_REQUEST;
-
-    mbox[2] = MBOX_TAG_SETVIRTWH; //Set virtual width-height
-    mbox[3] = 8;
-    mbox[4] = 0;
-    mbox[5] = width;
-    mbox[6] = height;
-
-    mbox[7] = MBOX_TAG_SETVIRTOFF; //Set virtual offset
-    mbox[8] = 8;
-    mbox[9] = 0;
-    mbox[10] = 0; // x offset
-    mbox[11] = 0; // y offset
-
-    mbox[12] = MBOX_TAG_SETDEPTH; //Set color depth
-    mbox[13] = 4;
-    mbox[14] = 0;
-    mbox[15] = COLOR_DEPTH; //Bits per pixel
-
-    mbox[16] = MBOX_TAG_SETPXLORDR; //Set pixel order
-    mbox[17] = 4;
-    mbox[18] = 0;
-    mbox[19] = PIXEL_ORDER;
-
-    mbox[20] = MBOX_TAG_GETFB; //Get frame buffer
-    mbox[21] = 8;
-    mbox[22] = 0;
-    mbox[23] = 16; //alignment in 16 bytes
-    mbox[24] = 0; //will return Frame Buffer size in bytes
-
-    mbox[25] = MBOX_TAG_GETPITCH; //Get pitch
-    mbox[26] = 4;
-    mbox[27] = 0;
-    mbox[28] = 0; //Will get pitch value here
-    mbox[29] = MBOX_TAG_LAST;
-
-    // Call Mailbox
-    if (mbox_call(ADDR(mbox), MBOX_CH_PROP)
-        && mbox[15] == COLOR_DEPTH
-        && mbox[19] == PIXEL_ORDER
-        && mbox[23] != 0
-    ) {
-        mbox[23] &= 0x3FFFFFFF;
-        // Access frame buffer as 1 byte per each address
-        fb = (unsigned char *)((unsigned long)mbox[23]);
-        uart_puts("Got allocated Frame Buffer at RAM physical address: ");
-        uart_hex(mbox[23]);
-        uart_puts("\n");
-        uart_puts("Frame Buffer Size (bytes): ");
-        uart_dec(mbox[24]);
-        uart_puts("\n");
-        pitch = mbox[28];
-    } else {
-        uart_puts("Unable to get a frame buffer with provided setting\n");
-    }
-}
-
 void clear_display() {
     drawRectARGB32(0, 0, scr_width, scr_height, default_background_color, 1);
 }
 
-/**
- * Display a string using proportional SSFN
- */
+// Font display
 void drawChar(unsigned char ch, int x, int y, unsigned int attr, int scale) {
     /*
         Display a character.
@@ -385,16 +271,4 @@ void draw_large_image_controller(int x, int y) {
             }
         }
     }
-}
-
-void wait_msec(unsigned int n) {
-    n *= 1000;
-    register unsigned long f, t, r;
-    // get the current counter frequency
-    asm volatile ("mrs %0, cntfrq_el0" : "=r"(f));
-    // read the current counter
-    asm volatile ("mrs %0, cntpct_el0" : "=r"(t));
-    // calculate expire value for counter
-    t+=((f/1000)*n)/1000;
-    do{asm volatile ("mrs %0, cntpct_el0" : "=r"(r));}while(r<t);
 }

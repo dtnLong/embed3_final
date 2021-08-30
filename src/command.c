@@ -19,55 +19,22 @@ void command_cls() {
 }
 
 void command_scrsize(char (*token)[50]) {
-    // Set physical and virtual screen size of display
+    /*
+        Change physical and virtual screen size
+    */
     if (token[1][0] == '\0') {
         uart_puts("This command need parameter!\n");
         uart_puts(HELP_MESSAGE);
         return;
     }
 
-    int physical_screen_height = -1;
-    int physical_screen_width = -1;
-    int virtual_screen_height = -1;
-    int virtual_screen_width = -1;
-
-    for (int i = 1; token[i][0] != '\0'; i++) {
-        if (i > 4) {
-            uart_puts("Invalid extra parameter\n");
-            uart_puts(HELP_MESSAGE);
-            return;
-        } else if (str_compare(token[i], "-p")) {
-            if (str_is_int(token[i + 1]) == 0 || str_is_int(token[i + 2]) == 0) {
-                uart_puts("Screen width or height must be a number\n");
-                uart_puts(HELP_MESSAGE);
-                return;
-            }
-            physical_screen_width = str_to_int(token[i + 1]);
-            physical_screen_height = str_to_int(token[i + 2]);
-            i += 2;
-        } else if (str_compare(token[i], "-v")) {
-            if (str_is_int(token[i + 1]) == 0 || str_is_int(token[i + 2]) == 0) {
-                uart_puts("Screen width or height must be a number\n");
-                uart_puts(HELP_MESSAGE);
-                return;
-            }
-            virtual_screen_width = str_to_int(token[i + 1]);
-            virtual_screen_height = str_to_int(token[i + 2]);
-            i += 2;
-        } else {
-            uart_puts("Invalid parameter: ");
-            uart_puts(token[i]);
-            uart_puts("\n");
-            uart_puts(HELP_MESSAGE);
-            return;
-        }
+    if (str_is_int(token[1]) == 0 || str_is_int(token[2]) == 0) {
+        uart_puts("Screen width or height must be a number\n");
+        uart_puts(HELP_MESSAGE);
+        return;
     }
-    if (physical_screen_width != -1 && physical_screen_height != -1) {
-        set_physical_size(physical_screen_width, physical_screen_height);
-    }
-    if (virtual_screen_width != -1 && virtual_screen_height != -1) {
-        set_virtual_size(virtual_screen_width, virtual_screen_height);
-    }
+    
+    framebf_init(str_to_int(token[1]), str_to_int(token[2]));
     uart_puts("\n");
 }
 
@@ -96,16 +63,7 @@ void command_largeimg() {
 }
 
 void command_video(){
-    while (1){
-        clear_display();
-        wait_msec(500);
-        draw_small_image(0, 0);
-        wait_msec(500);
-        clear_display();
-        wait_msec(500);
-        draw_small_image(0, 0);
-        wait_msec(500);
-    }
+    
 }
 
 void interpret_command(char* command) {

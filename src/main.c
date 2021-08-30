@@ -9,7 +9,7 @@ void main() {
 	uart_init();
 
 	// Initialize frame buffer
-	framebf_init();
+	framebf_init(1024, 768);
 
 	// Print welcome message
 	uart_puts("d88888b d88888b d88888b d888888b .d888b.   j88D  .d888b.  .d88b. \n");
