@@ -27,12 +27,14 @@ void main() {
 	uart_puts("88   8D 88   88 88 `88. 88.       `8b  d8' db   8D \n");
 	uart_puts("Y8888P' YP   YP 88   YD Y88888P    `Y88P'  `8888Y'\n");
 	uart_puts("\n");
-
-	wait_msec(2000);
-
-	uart_puts("\n");
-	uart_puts("MyBareOS>");
 	
+
+	// Testing site ----------------------------------------------------------------------------
+
+	// End of testing site ---------------------------------------------------------------------
+
+	uart_puts("MyBareOS>");
+
 	char command[50] = "";
 	char prev_c = ' ';
     while(1) {

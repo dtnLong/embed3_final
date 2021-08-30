@@ -23,10 +23,10 @@ clean:
 	del ${BUILD_DIR}\kernel8.elf ${BUILD_DIR}\*.o ${BUILD_DIR}\*.img
 
 run1:
-	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial null -serial stdio
+	qemu-system-aarch64 -M raspi3 -kernel $(BUILD_DIR)/kernel8.img -serial null -serial stdio
 
 run0:
-	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial stdio
+	qemu-system-aarch64 -M raspi3 -kernel $(BUILD_DIR)/kernel8.img -serial stdio
 	
 test1: all run1
 test0: all run0
