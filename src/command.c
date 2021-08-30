@@ -62,8 +62,8 @@ void command_largeimg() {
     image_viewer(0, 0);
 }
 
-void command_video(){
-    
+void command_video() {
+    play_video(0, 0);
 }
 
 void interpret_command(char* command) {
@@ -90,8 +90,6 @@ void interpret_command(char* command) {
     } else if (str_compare(command_token[0], "video")){
         uart_puts("Video command\n");
         command_video();
-    } else if (str_compare(command_token[0], "abc")){
-        uart_puts("abc command\n");
     } else {
         uart_puts("Command not recognize!\n");
         uart_puts("Type \"help\" to view all command\n\n");

@@ -8,3 +8,4 @@ void drawString(int x, int y, char *s, unsigned int color, int scale);
 void draw_small_image(int x, int y);
 void draw_large_image(int x, int y);
 void image_viewer(int x, int y);
+void play_video(int x, int y);

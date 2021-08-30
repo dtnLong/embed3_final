@@ -3,6 +3,8 @@
 #include "../include/font.h"
 #include "../include/small_img.h"
 #include "../include/large_img.h"
+#include "../include/video.h"
+#include "../include/delay.h"
 
 //Use RGBA32 (32 bits for each pixel)
 #define COLOR_DEPTH 32
@@ -293,3 +295,25 @@ void image_viewer(int x, int y) {
 }
 
 // Video
+void play_video(int x, int y) {
+    /*
+        Play a video
+        x, y: Top left coordinate of the video
+    */
+
+    // Loop through every frame
+    for (int frame = 0; frame < VIDEO_TOTAL_FRAME; frame++) {
+        // Loop through frame height
+        for (int i = 0; i < VIDEO_HEIGHT; i++) {
+            // Loop through frame width
+            for (int j = 0; j < VIDEO_WIDTH; j++) {
+                // The order of the image pixel data is arranged from left to right and top to bottom
+                // So the current pixel data in the array is: image width * current height + current width
+                drawPixelARGB32(x + j, y + i, video_data[frame][VIDEO_WIDTH * i + j]);
+            }
+        }
+
+        //The video is 15 FPS so 1 frame is 0.0667 s = 66.7 ms
+        wait_msec(67);
+    }
+}
