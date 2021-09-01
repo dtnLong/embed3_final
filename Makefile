@@ -7,7 +7,7 @@ OFILES = $(CFILES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 CFLAGS = -Wall -O2 -ffreestanding -nostdinc -nostdlib -nostartfiles
 LDFLAGS = -nostdlib -nostartfiles
 
-all: clean $(BUILD_DIR)/kernel8.img run0
+all: clean $(BUILD_DIR)/kernel8.img run1
 
 $(BUILD_DIR)/start.o: $(SRC_DIR)/start.S
 	aarch64-none-elf-gcc $(GCCFLAGS) -c $< -o $@

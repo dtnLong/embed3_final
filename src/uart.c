@@ -138,16 +138,18 @@ void uart_sendc(unsigned char c){
  * Receive a character
  */
 char uart_getc() {
-    char c;
+    unsigned char c = 0;
 
 #if UART_TYPE == 1
     /* wait until data is ready (one symbol) */
-    do {
-    	asm volatile("nop");
-    } while ( !(*AUX_MU_LSR & 0x01) );
+    // do {
+    // 	asm volatile("nop");
+    // } while ( !(*AUX_MU_LSR & 0x01) );
 
     /* read it and return */
-    c = (char)(*AUX_MU_IO);
+    if ((*AUX_MU_LSR & 0x01)) {
+        c = (unsigned char)(*AUX_MU_IO);
+    }
 
 #else //UART 0
     /* Check Flags Register */
