@@ -209,11 +209,11 @@ void run_snake() {
                 uart_puts("gameplay\n");
                 while(1) {
                     render_snake();
-                    // c = uart_getc();
-                    // if (c != 0) {
-                    //     handle_control(c);
-                    //     c = 0;
-                    // }
+                    c = uart_getc();
+                    if (c != 0) {
+                        handle_control(c);
+                        c = 0;
+                    }
                     wait_msec(200);
                 }
                 break;

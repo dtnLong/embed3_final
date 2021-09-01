@@ -128,7 +128,9 @@ void uart_sendc(unsigned char c){
    	} while (*UART0_FR & UART0_FR_TXFF);
 
    	/* Write our data byte out to the data register */
-   	*UART0_DR = c ;
+    if (c != 0) { // Experimental
+        *UART0_DR = c ;
+    }
 
 #endif
 
@@ -153,15 +155,19 @@ char uart_getc() {
 
 #else //UART 0
     /* Check Flags Register */
-       /* Wait until Receiver is not empty
-        * (at least one byte data in receive fifo)*/
-   	do {
-   		asm volatile("nop");
-       } while(*UART0_FR&0x10); //while ( *UART0_FR & UART0_FR_RXFE );
+    /* Wait until Receiver is not empty
+    * (at least one byte data in receive fifo)*/
+    if (*UART0_FR&0x10) {
+        return 0;
+    } else {
+        do {
+            asm volatile("nop");
+        } while(*UART0_FR&0x10); //while ( *UART0_FR & UART0_FR_RXFE );
 
-       /* read it and return */
-       //c = (unsigned char) (*UART0_DR);
-       c = (unsigned char) (*UART0_DR);
+        /* read it and return */
+        //c = (unsigned char) (*UART0_DR);
+        c = (unsigned char) (*UART0_DR);
+    }
 #endif
 
     /* convert carriage return to newline */

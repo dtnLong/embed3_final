@@ -1,4 +1,4 @@
-#define UART_TYPE 1  //value 1 or 0
+#define UART_TYPE 0  //value 1 or 0
 
 /* Auxilary mini UART (UART1) registers */
 #define AUX_ENABLE      ((volatile unsigned int*)(MMIO_BASE+0x00215004))
