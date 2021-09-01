@@ -3,6 +3,7 @@
 #include "../include/util.h"
 #include "../include/command.h"
 #include "../include/framebf.h"
+#include "../include/snake.h"
 
 void command_help(char* parameter) {
     // Display command list and command detail
@@ -66,6 +67,11 @@ void command_video() {
     play_video(0, 0);
 }
 
+void command_snake_game() {
+    run_snake();
+}
+
+
 void interpret_command(char* command) {
     char command_token[20][50];
     for (int i = 0; i < 20; i++) {
@@ -90,6 +96,9 @@ void interpret_command(char* command) {
     } else if (str_compare(command_token[0], "video")){
         uart_puts("Video command\n");
         command_video();
+    } else if (str_compare(command_token[0], "snake")) {
+        uart_puts("Starting Snake...\n");
+        command_snake_game();
     } else {
         uart_puts("Command not recognize!\n");
         uart_puts("Type \"help\" to view all command\n\n");

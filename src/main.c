@@ -12,6 +12,7 @@ void main() {
 	framebf_init(1024, 768);
 	clear_display();
 
+
 	// Print welcome message
 	uart_puts("d88888b d88888b d88888b d888888b .d888b.   j88D  .d888b.  .d88b. \n");
 	uart_puts("88'     88'     88'     `~~88~~' VP  `8D  j8~88  88' `8D .8P  88.\n");

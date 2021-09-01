@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "mbox.h": "c",
-        "font.h": "c"
+        "font.h": "c",
+        "snake.h": "c"
     }
 }
