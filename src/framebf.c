@@ -120,6 +120,93 @@ void drawRectARGB32(int x1, int y1, int x2, int y2, unsigned int attr, int fill)
     }
 }
 
+void drawLine(int x1, int y1, int x2, int y2, unsigned int attr)  
+{  
+    int dx, dy, p, x, y;
+
+    dx = x2-x1;
+    dy = y2-y1;
+    x = x1;
+    y = y1;
+    p = 2*dy-dx;
+
+    while (x<x2) {
+       if (p >= 0) {
+          drawPixelARGB32(x,y,attr);
+          y++;
+          p = p+2*dy-2*dx;
+       } else {
+          drawPixelARGB32(x,y,attr);
+          p = p+2*dy;
+       }
+       x++;
+    }
+}
+
+void drawBomb(int x0, int y0, int radius) {
+    int x = radius;
+    int y = 0;
+    int err = 0;
+ 
+    while (x >= y) {
+        drawLine(x0 - y, y0 + x, x0 + y, y0 + x, 0x008ACB88);
+        drawLine(x0 - x, y0 + y, x0 + x, y0 + y, 0x00f786b9);
+        drawLine(x0 - x, y0 - y, x0 + x, y0 - y, 0x008ACB88);
+        drawLine(x0 - y, y0 - x, x0 + y, y0 - x, 0x00f786b9);
+        drawPixelARGB32(x0 - y, y0 + x, 0x008ACB88);
+        drawPixelARGB32(x0 + y, y0 + x, 0x008ACB88);
+        drawPixelARGB32(x0 - x, y0 + y, 0x008ACB88);
+        drawPixelARGB32(x0 + x, y0 + y, 0x008ACB88);
+        drawPixelARGB32(x0 - x, y0 - y, 0x008ACB88);
+        drawPixelARGB32(x0 + x, y0 - y, 0x008ACB88);
+        drawPixelARGB32(x0 - y, y0 - x, 0x008ACB88);
+        drawPixelARGB32(x0 + y, y0 - x, 0x008ACB88);
+
+        if (err <= 0) {
+            y += 1;
+            err += 2*y + 1;
+        }
+    
+        if (err > 0) {
+            x -= 1;
+            err -= 2*x + 1;
+        }
+    }
+};
+
+void drawCircle(int x0, int y0, int radius, unsigned int attr, int outline_attr, int fill) {
+    int x = radius;
+    int y = 0;
+    int err = 0;
+ 
+    while (x >= y) {
+        if (fill) {
+            drawLine(x0 - y, y0 + x, x0 + y, y0 + x, attr);
+            drawLine(x0 - x, y0 + y, x0 + x, y0 + y, attr);
+            drawLine(x0 - x, y0 - y, x0 + x, y0 - y, attr);
+            drawLine(x0 - y, y0 - x, x0 + y, y0 - x, attr);
+        }
+        drawPixelARGB32(x0 - y, y0 + x, outline_attr);
+        drawPixelARGB32(x0 + y, y0 + x, outline_attr);
+        drawPixelARGB32(x0 - x, y0 + y, outline_attr);
+        drawPixelARGB32(x0 + x, y0 + y, outline_attr);
+        drawPixelARGB32(x0 - x, y0 - y, outline_attr);
+        drawPixelARGB32(x0 + x, y0 - y, outline_attr);
+        drawPixelARGB32(x0 - y, y0 - x, outline_attr);
+        drawPixelARGB32(x0 + y, y0 - x, outline_attr);
+
+        if (err <= 0) {
+            y += 1;
+            err += 2*y + 1;
+        }
+    
+        if (err > 0) {
+            x -= 1;
+            err -= 2*x + 1;
+        }
+    }
+}
+
 void clear_display() {
     drawRectARGB32(0, 0, scr_width, scr_height, default_background_color, 1);
 }

@@ -2,24 +2,27 @@
 #include "../include/framebf.h"
 #include "../include/delay.h"
 #include "../include/uart.h"
-#define SCREEN_WIDTH 1024
-#define SCREEN_HEIGHT 768
+#include "../include/random.h"
 #define SNAKE_WIDTH 19
 #define BACKGROUND_COLOR 0x004c546e
 #define BOX_COLOR 0x00e1e4ed
+#define FRUIT_COLOR 0x00f04848
 
 typedef enum {WELCOME, MAIN_MENU, GUIDE, GAMEPLAY, END} STATE;
 typedef enum {LEFT,RIGHT,UP,DOWN} DIRECTION;
-typedef enum {FAST, REVERSED, NONE} PENALTY; 
+typedef enum {FAST = 2, REVERSED = 1, NONE = 9} PENALTY; 
 STATE state = WELCOME;
 DIRECTION direction = RIGHT; 
 PENALTY penalty = NONE;
 
 //coordiantes
 int x,y;
+int food_x, food_y;
+int bomb_x, bomb_y;  
 
 //game stats
 int score = 0;
+int speed = 200;
 
 //snake data 
 int snake_length = 3;
@@ -32,7 +35,9 @@ int guide_flag = 1;
 int score_flag = 1;
 int end_flag = 1;
 
-//game flags
+//penalty data
+int penalty_turn = -1, prev_penalty_turn = -1;
+int penalty_effect_duration = 2;
 
 
 void init_UI() {
@@ -45,18 +50,64 @@ void update_head_coord(){
 	snake_coord[0][1] = y;
 }
 
+void generate_food() {
+    random:
+    food_x = 112 + (SNAKE_WIDTH + 1) * rand(0,40);
+    food_y = 34 + (SNAKE_WIDTH + 1) * rand(0,35);
+	for (int i = 0; i < snake_length; i++) { 
+		if ((snake_coord[i][0] == food_x)  && (snake_coord[i][1] == food_y)) {
+			goto random;
+		}
+	}
+}
+
+void render_food() {
+    generate_food();
+    drawCircle(food_x + 9, food_y + 9, 10, FRUIT_COLOR, 0, 1);
+}
+
+void generate_bomb() {
+    random:
+    bomb_x = 112 + (SNAKE_WIDTH + 1) * rand(0,40);
+    bomb_y = 34 + (SNAKE_WIDTH + 1) * rand(0,35);
+	if ((bomb_x != x) && (bomb_y != y)) {
+        for (int i = 0; i < snake_length; i++) { 
+            if ((snake_coord[i][0] == bomb_x)  && (snake_coord[i][1] == bomb_y)) {
+                goto random;
+            }
+        }
+    } else {
+        goto random;
+    }
+}
+
+void generate_penalty_turn() {
+    prev_penalty_turn = penalty_turn;
+    penalty_turn = snake_length + rand(3,6);
+}
+
+void render_bomb() {
+    generate_penalty_turn();
+    generate_bomb();
+    drawBomb(bomb_x + 9, bomb_y + 9, 10);
+}
+
 void initialize_game() {
     score = 0;
 	snake_length = 3;
-	x = SCREEN_WIDTH/2;
-	y = SCREEN_HEIGHT/2;
+	x = 512;
+	y = 374;
     direction = RIGHT;
+    
     update_head_coord();
 
     for (int i = 1; i < snake_length; i++) {
         snake_coord[i][0] = snake_coord[i-1][0] - SNAKE_WIDTH - 1;
         snake_coord[i][1] = snake_coord[i-1][1];
     }
+
+    generate_penalty_turn(); 
+    render_food();
 }
 
 void render_head() {
@@ -108,12 +159,12 @@ void update_snake_coord() {
 		if (penalty == REVERSED){
 			y += SNAKE_WIDTH + 1;
 			if (y >= 734){ 
-                y = 33;
+                y = 34;
 			}
 		}
 		else{
 			y -= SNAKE_WIDTH + 1;
-			if (y < 33){ 
+			if (y < 34){ 
                 y = 734 - SNAKE_WIDTH - 1;
 			} 
 		}
@@ -121,22 +172,83 @@ void update_snake_coord() {
 	else{ 
 		if (penalty == REVERSED){
 			y -= SNAKE_WIDTH + 1;
-			if (y < 33){
+			if (y < 34){
                 y = 734 - SNAKE_WIDTH - 1;
 			} 
 		}
 		else{
 			y += SNAKE_WIDTH + 1;
 			if (y >= 734){ 
-                y = 33;
+                y = 34;
 			}
 		}
 	}
     update_head_coord();
 }
 
+void reverse_direction() {
+    if (direction == RIGHT) {
+        direction = LEFT;
+    } else if (direction == LEFT) {
+        direction = RIGHT;
+    } else if (direction == UP) {
+        direction = DOWN;
+    } else if (direction == DOWN) {
+        direction = UP;
+    }
+}
+
+int snake_eat() {
+    if (food_x == x && food_y == y) {
+        snake_length++;
+        render_food();
+        if (penalty != NONE) {
+            penalty_effect_duration -= 1;
+            if (penalty == REVERSED && penalty_effect_duration == 0) {
+                penalty = NONE;
+                penalty_effect_duration = 2;
+                reverse_direction();
+            } else if (penalty == FAST && penalty_effect_duration == 0) {
+                penalty = NONE;
+                speed = 200;
+                penalty_effect_duration = 2;
+            }
+        } else if (snake_length - prev_penalty_turn == 2) {
+            uart_puts("asdf");
+            drawCircle(bomb_x + 9, bomb_y+9, 10, BOX_COLOR, BOX_COLOR, 1);
+            bomb_x = 0;
+            bomb_y = 0;
+        } 
+        return 1;
+    } else if (bomb_x == x && bomb_y == y) {
+        uart_puts("fads");
+        penalty = rand(REVERSED, FAST+1);
+        if (penalty == REVERSED) {
+            bomb_x = 0;
+            bomb_y = 0;
+            reverse_direction();
+        } else {
+            speed -= 50;
+        }
+    }
+    return 0;
+}
+
+int snake_eat_self() {
+    if (snake_length > 4) {
+		for (int i = 4; i < snake_length; i++) {
+			if ((snake_coord[i][0] == x) && (snake_coord[i][1] == y)) {
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
 void render_snake() {
-    clear_tail();
+    if (!snake_eat()) {
+        clear_tail();
+    }
     update_snake_coord();
     render_head();
 }
@@ -170,8 +282,6 @@ void handle_control(char input) {
 
 void run_snake() {
     init_UI();
-    initialize_game();
-    drawRectARGB32(0,0,19, 19, 0x00ff8c00, 1);
     char c;
     while(1) {
         switch(state) {
@@ -207,17 +317,27 @@ void run_snake() {
                 break;
             case GAMEPLAY:
                 uart_puts("gameplay\n");
+                initialize_game();
                 while(1) {
-                    render_snake();
                     c = uart_getc();
+                    render_snake();
                     if (c != 0) {
                         handle_control(c);
                         c = 0;
                     }
-                    wait_msec(200);
+                    if (snake_length == penalty_turn) {
+                        render_bomb();
+                    }
+                    if (snake_eat_self()) {
+                        init_UI();
+                        state = END;
+                        break;
+                    } 
+                    wait_msec(speed);
                 }
                 break;
             case END:
+                uart_puts("gameover\n");
                 break;
         } 
     }

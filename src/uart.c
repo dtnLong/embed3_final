@@ -160,9 +160,9 @@ char uart_getc() {
     if (*UART0_FR&0x10) {
         return 0;
     } else {
-        do {
-            asm volatile("nop");
-        } while(*UART0_FR&0x10); //while ( *UART0_FR & UART0_FR_RXFE );
+        // do {
+        //     asm volatile("nop");
+        // } while(*UART0_FR&0x10); //while ( *UART0_FR & UART0_FR_RXFE );
 
         /* read it and return */
         //c = (unsigned char) (*UART0_DR);
