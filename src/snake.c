@@ -3,36 +3,53 @@
 #include "../include/delay.h"
 #include "../include/uart.h"
 #include "../include/random.h"
+#include "../include/snake_logo.h"
+#include "../include/title_logo.h"
+#include "../include/util.h"
+
 #define SNAKE_WIDTH 19
 #define BACKGROUND_COLOR 0x004c546e
 #define BOX_COLOR 0x00e1e4ed
 #define FRUIT_COLOR 0x00f04848
+#define SELECT_COLOR 0x009f3eb8
 
 typedef enum {WELCOME, MAIN_MENU, GUIDE, GAMEPLAY, END} STATE;
 typedef enum {LEFT,RIGHT,UP,DOWN} DIRECTION;
-typedef enum {FAST = 2, REVERSED = 1, NONE = 9} PENALTY; 
+typedef enum {FAST = 2, DIZZY = 1, NONE = 0} PENALTY; 
+typedef enum {PLAY = 1, DIFFICULTY = 2, QUIT =3} OPTION;
+typedef enum {EASY = 300, MEDIUM = 200, HARD =100} MODE;
+typedef enum {PLAY_AGAIN = 1, MENU =2} GAME_OVER_OPTION;
+typedef enum {PAUSE, UNPAUSE} PAUSE_STATE;
+
 STATE state = WELCOME;
 DIRECTION direction = RIGHT; 
 PENALTY penalty = NONE;
+OPTION option = PLAY;
+MODE mode = EASY;
+PAUSE_STATE p_state = UNPAUSE;
+
+GAME_OVER_OPTION go_option = PLAY_AGAIN;
 
 //coordiantes
 int x,y;
 int food_x, food_y;
 int bomb_x, bomb_y;  
 
-//game stats
+//game data
 int score = 0;
-int speed = 200;
+char score_str[4] = "0000";
+int snake_speed;
+char game_mode[3][10] = {"hard", "medium", "easy"};
+int high_score = 0;
 
 //snake data 
 int snake_length = 3;
 int snake_coord[1400][2];
 
 //render flags
-int welcome_screen_flag = 1;
 int main_menu_flag = 1; 
 int guide_flag = 1; 
-int score_flag = 1;
+int title_flag = 1;
 int end_flag = 1;
 
 //penalty data
@@ -40,7 +57,7 @@ int penalty_turn = -1, prev_penalty_turn = -1;
 int penalty_effect_duration = 2;
 
 
-void init_UI() {
+void clear_screen() {
     drawRectARGB32(0,0,1023,767,BACKGROUND_COLOR,1); //draw background
   	drawRectARGB32(111,33,912,734,BOX_COLOR,1); //draw inner box
 }
@@ -64,6 +81,11 @@ void generate_food() {
 void render_food() {
     generate_food();
     drawCircle(food_x + 9, food_y + 9, 10, FRUIT_COLOR, 0, 1);
+}
+
+void render_game_info() {
+    drawString_bg(122, 8, "Score:", 0xFFFFFFFF, BACKGROUND_COLOR, 2);
+    drawString_bg(330, 8, "Bomb:", 0xFFFFFFFF, BACKGROUND_COLOR, 2);
 }
 
 void generate_bomb() {
@@ -108,6 +130,7 @@ void initialize_game() {
 
     generate_penalty_turn(); 
     render_food();
+    render_game_info();
 }
 
 void render_head() {
@@ -128,7 +151,7 @@ void update_body_coord() {
 void update_snake_coord() {
     update_body_coord();
     if (direction == RIGHT){ 
-		if (penalty == REVERSED){ 
+		if (penalty == DIZZY){ 
 			x -= SNAKE_WIDTH + 1;
 			if (x < 112){ 
 				x = 912-SNAKE_WIDTH -1;
@@ -142,7 +165,7 @@ void update_snake_coord() {
 		} 
 	}
 	else if (direction == LEFT){
-		if (penalty == REVERSED){
+		if (penalty == DIZZY){
 			x += SNAKE_WIDTH + 1;
 			if (x >= 912){
 				x = 112;
@@ -156,7 +179,7 @@ void update_snake_coord() {
 		}
 	}
 	else if (direction == UP){ 
-		if (penalty == REVERSED){
+		if (penalty == DIZZY){
 			y += SNAKE_WIDTH + 1;
 			if (y >= 734){ 
                 y = 34;
@@ -170,7 +193,7 @@ void update_snake_coord() {
 		}
 	}
 	else{ 
-		if (penalty == REVERSED){
+		if (penalty == DIZZY){
 			y -= SNAKE_WIDTH + 1;
 			if (y < 34){
                 y = 734 - SNAKE_WIDTH - 1;
@@ -198,37 +221,67 @@ void reverse_direction() {
     }
 }
 
+void update_score(int x) {
+    score += x;
+    int temp = score;
+    for (int i = 3; i >= 0; i--) {
+        score_str[i] = temp % 10 + '0';
+        temp = temp / 10;
+    } 
+    drawRectARGB32(238,8,222,24,BACKGROUND_COLOR,1);
+    drawString_bg(238, 8, score_str, 0xFFFFFFFF, BACKGROUND_COLOR, 2);
+}
+
+void update_pause_info() {
+    drawRectARGB32(816,8,912,24,BACKGROUND_COLOR,1);
+    if (p_state == PAUSE) {
+        drawString_bg(816, 8, "Paused", 0xFFFFFFFF, BACKGROUND_COLOR, 2);
+    }
+}
+
+void update_bomb_info() {
+    drawRectARGB32(416,8,550,24,BACKGROUND_COLOR,1);
+    if (penalty == DIZZY) {
+        drawString_bg(426, 8, "Reverse", 0xFFFFFFFF, BACKGROUND_COLOR, 2);
+    } else if (penalty == FAST) {
+        drawString_bg(426, 8, "Fast", 0xFFFFFFFF, BACKGROUND_COLOR, 2);
+    }
+}
+
+
 int snake_eat() {
     if (food_x == x && food_y == y) {
         snake_length++;
+        update_score(5);
         render_food();
         if (penalty != NONE) {
             penalty_effect_duration -= 1;
-            if (penalty == REVERSED && penalty_effect_duration == 0) {
+            if (penalty == DIZZY && penalty_effect_duration == 0) {
                 penalty = NONE;
                 penalty_effect_duration = 2;
                 reverse_direction();
             } else if (penalty == FAST && penalty_effect_duration == 0) {
                 penalty = NONE;
-                speed = 200;
+                snake_speed = mode;
                 penalty_effect_duration = 2;
             }
+            update_bomb_info();
         } else if (snake_length - prev_penalty_turn == 2) {
-            uart_puts("asdf");
             drawCircle(bomb_x + 9, bomb_y+9, 10, BOX_COLOR, BOX_COLOR, 1);
             bomb_x = 0;
             bomb_y = 0;
         } 
         return 1;
     } else if (bomb_x == x && bomb_y == y) {
-        uart_puts("fads");
-        penalty = rand(REVERSED, FAST+1);
-        if (penalty == REVERSED) {
+        update_score(-5);
+        penalty = rand(DIZZY, FAST+1);
+        update_bomb_info();
+        if (penalty == DIZZY) {
             bomb_x = 0;
             bomb_y = 0;
             reverse_direction();
         } else {
-            speed -= 50;
+            snake_speed -= 50;
         }
     }
     return 0;
@@ -280,65 +333,206 @@ void handle_control(char input) {
     }
 }
 
+void display_notification() {
+    drawString(304, 743, "Press p to pause/unpause, r to return to menu", 0x00FFFFFF, 2);
+}
+
 void run_snake() {
-    init_UI();
+    clear_screen();
     char c;
     while(1) {
         switch(state) {
-            case WELCOME:
-                //wait_msec(2000);
-                if (welcome_screen_flag) { 
-                    state = MAIN_MENU;
+            case WELCOME: 
+                draw_small_image(112, 34, TITLE_LOGO_WIDTH, TITLE_LOGO_HEIGHT, title_logo);
+                draw_small_image(112, 334, SNAKE_LOGO_WIDTH, SNAKE_LOGO_HEIGHT, snake_logo);
+                for (int i = 0; i < 3; i++) {
+                    drawString_bg(392, 710, "Loading...", BACKGROUND_COLOR, BOX_COLOR, 3);
+                    wait_msec(1000);
+                    drawString_bg(392, 710, "Loading...", BOX_COLOR, BOX_COLOR, 3);
+                    wait_msec(500);
                 }
+                state = MAIN_MENU;
+                clear_screen();
                 break;
             case MAIN_MENU:
-                uart_puts("main menu\n");
+                if (title_flag == 1) {
+                    draw_small_image(112, 34, TITLE_LOGO_WIDTH, TITLE_LOGO_HEIGHT, title_logo);
+                    title_flag = 0;
+                }
                 if (main_menu_flag) {
-                    drawString(328, 310, "Press SPACE to continue", 0x00FFFFFF, 2);
+                    if (option == PLAY) {
+                        drawString_bg(463, 354, "Play", SELECT_COLOR, BOX_COLOR, 3);
+                        drawString_bg(392, 394, "Difficulty", 0, BOX_COLOR, 3);
+                        drawString_bg(463, 438, "Quit", 0, BOX_COLOR, 3);
+                        drawString_bg(672, 394, game_mode[mode/100-1], 0, BOX_COLOR, 3);
+                    } else if (option == DIFFICULTY){
+                        drawString_bg(463, 354, "Play", 0, BOX_COLOR, 3);
+                        drawString_bg(392, 394, "Difficulty", SELECT_COLOR, BOX_COLOR, 3);
+                        drawString_bg(463, 438, "Quit", 0, BOX_COLOR, 3);
+                        drawRectARGB32(672, 394, 816, 418, BOX_COLOR, 1); //Clear mode
+                        drawString_bg(672, 394, game_mode[mode/100-1], BACKGROUND_COLOR, BOX_COLOR, 3);
+                    } else if (option == QUIT) {
+                        drawString_bg(463, 354, "Play", 0, BOX_COLOR, 3);
+                        drawString_bg(392, 394, "Difficulty", 0, BOX_COLOR, 3);
+                        drawString_bg(463, 438, "Quit", SELECT_COLOR, BOX_COLOR, 3);
+                        drawString_bg(672, 394, game_mode[mode/100-1], 0, BOX_COLOR, 3);
+                    } 
+                    drawString(328, 710, "Press SPACE to continue", 0x00FFFFFF, 2);
                     main_menu_flag = 0;
                 } 
                 c = uart_getc();
                 if (c == ' ') {
-                    state = GUIDE;
-                    drawRectARGB32(328, 310, 696, 326, BOX_COLOR, 1);
+                    if (option == PLAY) {
+                        state = GUIDE;
+                        snake_speed = mode;
+                        drawRectARGB32(328, 310, 696, 326, BOX_COLOR, 1);
+                        clear_screen();
+                        main_menu_flag = 1;
+                        title_flag = 1;
+                    } else if (option == QUIT) {
+                        drawRectARGB32(0, 0, 1023, 767, 0, 1);
+                        state = WELCOME;
+                        main_menu_flag = 1;
+                        title_flag = 1;
+                        goto quit;
+                    }
+                } else if (c == 'w') {
+                    option -= 1;
+                    if (option < PLAY) {
+                        option = QUIT;
+                    }
                     main_menu_flag = 1;
-                } 
+                } else if (c == 's') {
+                    option += 1;
+                    if (option > QUIT) {
+                        option = PLAY;
+                    }
+                    main_menu_flag = 1;
+                } else if (c == 'a' && option == DIFFICULTY) {
+                    mode += 100;
+                    if (mode > EASY) {
+                        mode = HARD;
+                    }
+                    main_menu_flag = 1;
+                } else if (c == 'd' && option == DIFFICULTY) {
+                    mode -= 100;
+                    if (mode < HARD) {
+                        mode = EASY;
+                    }
+                    main_menu_flag = 1;
+                }
                 break;
             case GUIDE:
-                uart_puts("guide\n");
                 if (guide_flag) {
+                    drawString_bg(336, 54, "How to play", BACKGROUND_COLOR, BOX_COLOR, 4);
+                    drawString_bg(290, 140, "W", BACKGROUND_COLOR, BOX_COLOR, 3);
+                    drawString_bg(242, 174, "A S D", BACKGROUND_COLOR, BOX_COLOR, 3);
+                    drawString_bg(450, 140, "Press W/A/S/D to move", 0, BOX_COLOR, 2);
+                    drawString_bg(450, 174, "up/left/down/right", 0, BOX_COLOR, 2);
+                    drawCircle(295, 300, 20, FRUIT_COLOR, 0, 1);
+                    drawString_bg(450, 290, "Fruit: +5 score and increase", 0, BOX_COLOR, 2);
+                    drawString_bg(450, 324, "increase snake length", 0, BOX_COLOR, 2);
+                    drawBomb(295, 450, 20);
+                    drawString_bg(450, 440, "Bomb: -5 score and make", 0, BOX_COLOR, 2);
+                    drawString_bg(450, 474, "snake faster or dizzy", 0, BOX_COLOR, 2);
+                    drawString_bg(450, 504, "(reverse control)", 0, BOX_COLOR, 2);
+                    drawString(328, 710, "Press SPACE to continue", 0x00FFFFFF, 2);
                     guide_flag = 0;
                 }
                 c = uart_getc();
                 if (c == ' ') {
                     state = GAMEPLAY;
+                    clear_screen();
                     guide_flag = 1;
                 } 
                 break;
             case GAMEPLAY:
-                uart_puts("gameplay\n");
+                display_notification();
                 initialize_game();
                 while(1) {
                     c = uart_getc();
                     render_snake();
-                    if (c != 0) {
+                    if (c == 'r') {
+                        state = MAIN_MENU;
+                        break;
+                    } else if (c == 'p' && p_state == UNPAUSE) {
+                        p_state = PAUSE;
+                        update_pause_info();
+                        while (1) {
+                            c = uart_getc();
+                            if (c == 'p') {
+                                p_state = UNPAUSE;
+                                update_pause_info();
+                                break;
+                            }
+                        }
+                    } else {
                         handle_control(c);
-                        c = 0;
                     }
                     if (snake_length == penalty_turn) {
                         render_bomb();
                     }
                     if (snake_eat_self()) {
-                        init_UI();
+                        clear_screen();
                         state = END;
                         break;
                     } 
-                    wait_msec(speed);
+                    wait_msec(snake_speed);
                 }
                 break;
             case END:
-                uart_puts("gameover\n");
+                if (end_flag == 1) {
+                    drawString_bg(332, 104, "Game Over", BACKGROUND_COLOR, BOX_COLOR, 5);
+                    drawString_bg(336, 274, "Score:", 0, BOX_COLOR, 4);
+                    drawString_bg(560, 274, score_str, 0, BOX_COLOR, 4);
+                    if (score > high_score) {
+                        high_score = score;
+                        drawString_bg(296, 334, "Congrats, new high score!!!", BACKGROUND_COLOR, BOX_COLOR, 2);
+                    } else {
+                        char high_score_str[4];
+                        int temp = high_score;
+                        for (int i = 3; i >= 0; i--) {
+                            high_score_str[i] = temp % 10 + '0';
+                            temp = temp / 10;
+                        } 
+                        drawString_bg(384, 334, "High score:", BACKGROUND_COLOR, BOX_COLOR, 2);
+                        drawString_bg(576, 334, high_score_str, BACKGROUND_COLOR, BOX_COLOR, 2);
+                    }
+                    if (go_option == PLAY_AGAIN) {
+                        drawString_bg(182, 470, "Play Again", SELECT_COLOR, BOX_COLOR, 3);
+                        drawString_bg(598, 470, "Main Menu", 0, BOX_COLOR, 3);
+                    } else if (go_option == MENU) {
+                        drawString_bg(182, 470, "Play Again", 0, BOX_COLOR, 3);
+                        drawString_bg(598, 470, "Main Menu", SELECT_COLOR, BOX_COLOR, 3);
+                    }
+
+                    end_flag = 0;
+                }
+                c = uart_getc();
+                if (c == ' ') {
+                    if (go_option == PLAY_AGAIN) {
+                        clear_screen();
+                        state = GAMEPLAY;
+                    } else if (go_option == MENU) {
+                        clear_screen();
+                        state = MAIN_MENU;
+                    }
+                    end_flag = 1;
+                } else if (c == 'a') {
+                    go_option -= 1;
+                    if (go_option < PLAY_AGAIN) {
+                        go_option = MENU;
+                    }
+                    end_flag = 1;
+                } else if (c == 'd') {
+                    go_option += 1;
+                    if (go_option > MENU) {
+                        go_option = PLAY_AGAIN;
+                    }
+                    end_flag = 1;
+                }
                 break;
         } 
     }
+    quit:;
 }

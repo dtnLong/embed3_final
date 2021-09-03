@@ -4,6 +4,7 @@
 #include "../include/command.h"
 #include "../include/framebf.h"
 #include "../include/snake.h"
+#include "../include/small_img.h"
 
 void command_help(char* parameter) {
     // Display command list and command detail
@@ -56,7 +57,7 @@ void command_txt() {
 }
 
 void command_smallimg() {
-    draw_small_image(0, 0);
+    draw_small_image(0, 0, SMALL_IMG_WIDTH, SMALL_IMG_HEIGHT, small_img);
 }
 
 void command_largeimg() {

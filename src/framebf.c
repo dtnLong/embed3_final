@@ -1,7 +1,6 @@
 #include "../include/mbox.h"
 #include "../include/uart.h"
 #include "../include/font.h"
-#include "../include/small_img.h"
 #include "../include/large_img.h"
 #include "../include/video.h"
 #include "../include/delay.h"
@@ -348,20 +347,98 @@ void drawString(int x, int y, char *s, unsigned int attr, int scale) {
     }
 }
 
+void drawChar_bg(unsigned char ch, int x, int y, unsigned int attr, unsigned int bg_attr, int scale) {
+    /*
+        Display a character.
+        ch: Character to display
+        x, y: Coordinate to display character at
+        attr: color of the character
+        scale: size of the character multiplier
+    */
+
+    if (ch > FONT_NUMGLYPHS) {
+        ch = 0;
+    }
+
+    int current_glyph_height = 0;
+
+    // Loop through all row (element) of the glyph
+    // When scaling, each row will have to be display a "scale" amount of time
+    for (int height = 1; height <= (FONT_HEIGHT * scale); height++) {
+        // Loop through each bit of the hex value of the current glyph element
+        // When scaling, each bit will have to be display a "scale" amount of time
+        for (int width = 0; width < (FONT_WIDTH * scale); width++) {
+            // Obtain the current bit to be displayed. By using width / scale, each bit will be duplicate by "scale" amount
+            // Ex: scale = 2;
+            // width = 0 -> bit = 0
+            // width = 1 -> bit = 0
+            // width = 2 -> bit = 1
+            // width = 2 -> bit = 1
+            // width = 3 -> bit = 2
+            // width = 3 -> bit = 2
+            // ...
+            unsigned char bit_data = 1 << (width / scale);
+
+            // If the current bit is 1 then drawa pixel with the input color else draw black pixel
+            // Each element in the font array contain data for the corresponding ASCII value
+            if (font[ch][current_glyph_height] & bit_data) {
+                drawPixelARGB32(x + width, y + height, attr);
+            } else {
+                drawPixelARGB32(x + width, y + height, bg_attr);
+            }
+        }
+
+        // When scaling, each row (element) of the glyph will have to be display a "scale" amount of time
+        // By doing this, the current glyph row (element) only increase after the element is display 
+        // Ex: scale = 2
+        // height = 1 -> height % 2 = 1;
+        // height = 2 -> height % 2 = 0; glyph row increase
+        // height = 3 -> height % 2 = 1;
+        // height = 4 -> height % 2 = 0; glyph row increase
+        // ...
+        if (height % scale == 0) {
+            current_glyph_height++;
+        }
+    }
+}
+
+void drawString_bg(int x, int y, char *s, unsigned int attr, unsigned int bg_attr, int scale) {
+    /*
+        Display string.
+        ch: Character to display
+        x, y: Coordinate to display character at
+        attr: color of the character
+        scale: size of the character multiplier
+    */
+
+    while (*s) {
+        if (*s == '\r') {
+            x = 0;
+        } else if(*s == '\n') {
+            x = 0; 
+            y += (FONT_HEIGHT * scale);
+        } else {
+	        drawChar_bg(*s, x, y, attr, bg_attr, scale);
+            x += (FONT_WIDTH * scale);
+        }
+       s++;
+    }
+}
+
 // Display image
-void draw_small_image(int x, int y) {
+void draw_small_image(int x, int y, int width, int height, int small_img[]) {
     /*
         Draw image have width and height smaller than screen size
         x, y: coordinate of the top left of the image
     */
     
     // Loop through image height
-    for (int i = 0; i < SMALL_IMG_HEIGHT; i++) {
+    for (int i = 0; i < height; i++) {
         // Loop through image width
-        for (int j = 0; j < SMALL_IMG_WIDTH; j++) {
+        for (int j = 0; j < width; j++) {
             // The order of the image pixel data is arranged from left to right and top to bottom
             // So the current pixel data in the array is: image width * current height + current width
-            drawPixelARGB32(x + j, y + i, small_img[SMALL_IMG_WIDTH * i + j]);
+            drawPixelARGB32(x + j, y + i, small_img[width * i + j]);
         }
     }
 }
