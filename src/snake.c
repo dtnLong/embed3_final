@@ -498,15 +498,15 @@ void run_snake() {
                         drawString_bg(384, 334, "High score:", BACKGROUND_COLOR, BOX_COLOR, 2);
                         drawString_bg(576, 334, high_score_str, BACKGROUND_COLOR, BOX_COLOR, 2);
                     }
-                    if (go_option == PLAY_AGAIN) {
-                        drawString_bg(182, 470, "Play Again", SELECT_COLOR, BOX_COLOR, 3);
-                        drawString_bg(598, 470, "Main Menu", 0, BOX_COLOR, 3);
-                    } else if (go_option == MENU) {
-                        drawString_bg(182, 470, "Play Again", 0, BOX_COLOR, 3);
-                        drawString_bg(598, 470, "Main Menu", SELECT_COLOR, BOX_COLOR, 3);
-                    }
 
                     end_flag = 0;
+                }
+                if (go_option == PLAY_AGAIN) {
+                    drawString_bg(182, 470, "Play Again", SELECT_COLOR, BOX_COLOR, 3);
+                    drawString_bg(598, 470, "Main Menu", 0, BOX_COLOR, 3);
+                } else if (go_option == MENU) {
+                    drawString_bg(182, 470, "Play Again", 0, BOX_COLOR, 3);
+                    drawString_bg(598, 470, "Main Menu", SELECT_COLOR, BOX_COLOR, 3);
                 }
                 c = uart_getc();
                 if (c == ' ') {
@@ -523,13 +523,13 @@ void run_snake() {
                     if (go_option < PLAY_AGAIN) {
                         go_option = MENU;
                     }
-                    end_flag = 1;
+                    end_flag = 0;
                 } else if (c == 'd') {
                     go_option += 1;
                     if (go_option > MENU) {
                         go_option = PLAY_AGAIN;
                     }
-                    end_flag = 1;
+                    end_flag = 0;
                 }
                 break;
         } 
