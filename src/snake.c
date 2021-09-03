@@ -334,7 +334,7 @@ void handle_control(char input) {
 }
 
 void display_notification() {
-    drawString(304, 743, "Press p to pause/unpause, r to return to menu", 0x00FFFFFF, 2);
+    drawString(152, 743, "Press p to pause/unpause, r to return to menu", 0x00FFFFFF, 2);
 }
 
 void run_snake() {
