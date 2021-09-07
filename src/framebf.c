@@ -211,64 +211,6 @@ void clear_display() {
 }
 
 // Font display
-// void drawChar(unsigned char ch, int x, int y, unsigned int attr, int scale) {
-//     /*
-//         Display a character.
-//         ch: Character to display
-//         x, y: Coordinate to display character at
-//         attr: color of the character
-//         scale: size of the character multiplier
-//     */
-
-//     unsigned char *glyph = 0;
-
-//     // Get the current glyph. Each element in the font array is the data of a glyph with size of 8 bit
-//     // So the address of the glype will be ASCII value of char * 8
-//     if (ch < FONT_NUMGLYPHS) {
-//         glyph = (unsigned char *) &font + (ch * FONT_BPG);
-//     } else {
-//         glyph = (unsigned char *) &font;
-//     }
-
-//     // Loop through all row (element) of the glyph
-//     for (int i = 1; i <= (FONT_HEIGHT * scale); i++) {
-//         // Loop through each bit of the hex value of the current glyph element
-//         // When scaling, each bit will have to be display a "scale" amount of time
-//         for (int j = 0; j < (FONT_WIDTH * scale); j++) {
-//             // Obtain the current bit to be displayed. By using j / scale, each bit will be duplicate by "scale" amount
-//             // Ex: scale = 2;
-//             // j = 0 -> bit = 0
-//             // j = 1 -> bit = 0
-//             // j = 2 -> bit = 1
-//             // j = 2 -> bit = 1
-//             // j = 3 -> bit = 2
-//             // j = 3 -> bit = 2
-//             // ...
-//             unsigned char bit_data = 1 << (j / scale);
-//             unsigned int color = attr;
-
-//             // If the current bit is 1 then drawa pixel with the input color else draw black pixel
-//             if (*glyph & bit_data) {
-//                 drawPixelARGB32(x+j, y+i, color);
-//             } else {
-//                 drawPixelARGB32(x+j, y+i, default_background_color);
-//             }
-//         }
-
-//         // When scaling, each row (element) of the glyph will have to be display a "scale" amount of time
-//         // By doing this, the current glyph row (element) only increase after the element is display 
-//         // Ex: scale = 2
-//         // i = 1 -> i % 2 = 1;
-//         // i = 2 -> i % 2 = 0; glyph row increase
-//         // i = 3 -> i % 2 = 1;
-//         // i = 4 -> i % 2 = 0; glyph row increase
-//         // ...
-//         if (i % scale == 0) {
-//             glyph += FONT_BPL;
-//         }
-//     }
-// }
-
 void drawChar(unsigned char ch, int x, int y, unsigned int attr, int scale) {
     /*
         Display a character.

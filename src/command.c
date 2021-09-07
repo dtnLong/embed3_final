@@ -9,7 +9,15 @@
 void command_help(char* parameter) {
     // Display command list and command detail
     if (str_compare(parameter, "\0")) {
-        uart_puts("For more information on a specific command, type help command-name\n\n");
+        uart_puts("Command list:\n");
+        uart_puts("cls                          Clear terminal\n");
+        uart_puts("srcsize [width] [height]     Display board revision\n");
+        uart_puts("clrscr                       Clear display to default color\n");
+        uart_puts("txt                          Display team member name\n");
+        uart_puts("small_img                    Display small image\n");
+        uart_puts("large_img                    Display large image with image viewer\n");
+        uart_puts("video                        Play 2 second video\n");
+        uart_puts("snake                        Start snake game\n\n");
     } else {
         uart_puts("Command not recognize!\n");
         uart_puts("Type \"help\" to view all command\n\n");
