@@ -70,6 +70,7 @@ void command_smallimg() {
 
 void command_largeimg() {
     image_viewer(0, 0);
+    clear_display();
 }
 
 void command_video() {
