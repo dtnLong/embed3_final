@@ -77,7 +77,7 @@ int high_score = 0;
 int snake_length = 3;
 int snake_coord[1400][2]; //2D array to store coordinates x,y (top left position) of each square of the snake
 
-/* render flags */
+/* render flags to avoid continuously re-rendering */
 int main_menu_flag = 1; 
 int guide_flag = 1; 
 int title_flag = 1;
@@ -424,7 +424,6 @@ void display_notification() {
 /* main program*/
 void run_snake() {
     clear_screen();
-    char c;
     while(1) {
         switch(state) {
             case WELCOME: 
