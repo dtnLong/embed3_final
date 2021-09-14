@@ -7,87 +7,139 @@
 #include "../include/title_logo.h"
 #include "../include/util.h"
 
-#define SNAKE_WIDTH 19
+/* GAME INFO:
+    Game resolution (800 x 700)
+        x1, y1: 112, 34
+        x2, y2: 911, 733 
+    Snake square: 20x20
+*/
+
+#define SNAKE_WIDTH 19 //snake width = 19 instead of 20 cuz from 0 to 19 there are 20 pixels
 #define BACKGROUND_COLOR 0x004c546e
 #define BOX_COLOR 0x00e1e4ed
 #define FRUIT_COLOR 0x00f04848
 #define SELECT_COLOR 0x009f3eb8
 
+
+/* Game states: 
+    WELCOME: loading screen
+    MAIN_MENU: main menu having options (PLAY, DIFFICULTY, QUIT)
+    GUIDE: how to play
+    GAMEPLAY: gameplay screen 
+    END: game over
+*/
 typedef enum {WELCOME, MAIN_MENU, GUIDE, GAMEPLAY, END} STATE;
+
+/* Snake direction: LEFT, RIGHT, UP, DOWN */
 typedef enum {LEFT,RIGHT,UP,DOWN} DIRECTION;
+
+/* Penalty types: 
+    NONE: no penalty
+    FAST: fast snake 
+    DIZZY: reverse snake's control
+*/
 typedef enum {FAST = 2, DIZZY = 1, NONE = 0} PENALTY; 
+
+/* Main menu options: PLAY (default), DIFFICULTY, QUIT */
 typedef enum {PLAY = 1, DIFFICULTY = 2, QUIT =3} OPTION;
+
+/* Difficulty: EASY, MEDIUM, HARD */
 typedef enum {EASY = 300, MEDIUM = 200, HARD =100} MODE;
+
+/* Options after game over: PLAY_AGAIN, MENU */
 typedef enum {PLAY_AGAIN = 1, MENU =2} GAME_OVER_OPTION;
+
+/* Pause state: PAUSE, UNPAUSE */
 typedef enum {PAUSE, UNPAUSE} PAUSE_STATE;
 
-STATE state = WELCOME;
+/* Initialize settings variables*/
+STATE state = WELCOME; 
 DIRECTION direction = RIGHT; 
 PENALTY penalty = NONE;
-OPTION option = PLAY;
-MODE mode = EASY;
+OPTION option = PLAY; 
+MODE mode = EASY; 
 PAUSE_STATE p_state = UNPAUSE;
-
 GAME_OVER_OPTION go_option = PLAY_AGAIN;
 
-//coordiantes
-int x,y;
+/* coordinates */
+int x,y; //snake coordinates
 int food_x, food_y;
 int bomb_x, bomb_y;  
 
-//game data
+/* game data */
 int score = 0;
 char score_str[4] = "0000";
 int snake_speed;
 char game_mode[3][10] = {"hard", "medium", "easy"};
 int high_score = 0;
 
-//snake data 
+/* snake data */ 
 int snake_length = 3;
-int snake_coord[1400][2];
+int snake_coord[1400][2]; //2D array to store coordinates x,y (top left position) of each square of the snake
 
-//render flags
+/* render flags */
 int main_menu_flag = 1; 
 int guide_flag = 1; 
 int title_flag = 1;
 int end_flag = 1;
 
-//penalty data
+/* penalty data */
 int penalty_turn = -1, prev_penalty_turn = -1;
 int penalty_effect_duration = 2;
 
-
+/* reset game screen for screen transition */
 void clear_screen() {
     drawRectARGB32(0,0,1023,767,BACKGROUND_COLOR,1); //draw background
   	drawRectARGB32(111,33,912,734,BOX_COLOR,1); //draw inner box
 }
 
+/* update head coordinates */
 void update_head_coord(){
 	snake_coord[0][0] = x;
 	snake_coord[0][1] = y;
 }
 
+/* generate new food coordinates 
+    since food size = snake's square size
+    -> food_x = x1 + (snake width + 1) * random value from 0 to 39 (one row can have 40 square blocks)
+    -> food_y = y1 + (snake width + 1) * random value from 0 to 34 (one column can have )
+    if the generated coordinates coincide with snake coordinates, generate new coordinates again
+*/
 void generate_food() {
     random:
     food_x = 112 + (SNAKE_WIDTH + 1) * rand(0,40);
     food_y = 34 + (SNAKE_WIDTH + 1) * rand(0,35);
 	for (int i = 0; i < snake_length; i++) { 
-		if ((snake_coord[i][0] == food_x)  && (snake_coord[i][1] == food_y)) {
+		if ((snake_coord[i][0] == food_x)  && (snake_coord[i][1] == food_y)) { 
 			goto random;
 		}
 	}
 }
 
+/* Render food by
+    1. generate new food coordinates
+    2. draw circles from the coordinates
+ */
 void render_food() {
     generate_food();
     drawCircle(food_x + 9, food_y + 9, 10, FRUIT_COLOR, 0, 1);
 }
 
+/* Render in-game information
+    score: player score
+    bomb: current bomb in effect (fast or reverse)
+*/
 void render_game_info() {
     drawString_bg(122, 8, "Score:", 0xFFFFFFFF, BACKGROUND_COLOR, 2);
     drawString_bg(330, 8, "Bomb:", 0xFFFFFFFF, BACKGROUND_COLOR, 2);
 }
 
+/* generate new bomb coordinates 
+    since bomb size = snake's square size
+    -> bomb_x = x1 + (snake width + 1) * random value from 0 to 39 (one row can have 40 square blocks)
+    -> bomb_y = y1 + (snake width + 1) * random value from 0 to 34 (one column can have )
+    if the generated coordinates coincide with food coordinates or snake coordinates, generate new coordinates again
+*/
 void generate_bomb() {
     random:
     bomb_x = 112 + (SNAKE_WIDTH + 1) * rand(0,40);
@@ -103,28 +155,37 @@ void generate_bomb() {
     }
 }
 
+/* Generate penalty turn every 3-5 turns since bomb has effect for 2 turns */
 void generate_penalty_turn() {
-    prev_penalty_turn = penalty_turn;
+    prev_penalty_turn = penalty_turn; //store previous penalty turn to check if two turns has passed and player doesnt eat the bomb
     penalty_turn = snake_length + rand(3,6);
 }
 
+/* render bomb by
+    1. generate the turn that the bomb will appear 
+    2. generate new bomb coordinates
+    3. draw bomb from the generated coordinates
+*/
 void render_bomb() {
     generate_penalty_turn();
     generate_bomb();
     drawBomb(bomb_x + 9, bomb_y + 9, 10);
 }
 
+
+/* initialize game settings */
 void initialize_game() {
     score = 0;
-	snake_length = 3;
-	x = 512;
-	y = 374;
-    direction = RIGHT;
+	snake_length = 3; //initial snake length
+	x = 512; //default x 
+	y = 374; //default y
+    direction = RIGHT; //intial direction
     
     update_head_coord();
 
+    /* initialize snake inital coordinates */
     for (int i = 1; i < snake_length; i++) {
-        snake_coord[i][0] = snake_coord[i-1][0] - SNAKE_WIDTH - 1;
+        snake_coord[i][0] = snake_coord[i-1][0] - SNAKE_WIDTH - 1; 
         snake_coord[i][1] = snake_coord[i-1][1];
     }
 
@@ -133,14 +194,17 @@ void initialize_game() {
     render_game_info();
 }
 
+/* Render new snake head when it mvoves*/
 void render_head() {
     drawRectARGB32(snake_coord[0][0],snake_coord[0][1],snake_coord[0][0] + SNAKE_WIDTH, snake_coord[0][1] + SNAKE_WIDTH, 0x00ff8c00, 1);
 }
 
+/* clear tail when snake moves */
 void clear_tail() {
     drawRectARGB32(snake_coord[snake_length-1][0],snake_coord[snake_length-1][1],snake_coord[snake_length-1][0] + SNAKE_WIDTH, snake_coord[snake_length-1][1] + SNAKE_WIDTH, BOX_COLOR, 1);
 }
 
+/* Update body coords, previous block coords = next block coords*/
 void update_body_coord() {
     for (int i = snake_length - 1; i>0; i--){
 		snake_coord[i][0] = snake_coord[i-1][0];
@@ -148,11 +212,15 @@ void update_body_coord() {
 	}
 }
 
+/* Update snake coords by
+    1. update body coords
+    2. update head coords base on the direction of the snake is heading
+*/ 
 void update_snake_coord() {
     update_body_coord();
-    if (direction == RIGHT){ 
-		if (penalty == DIZZY){ 
-			x -= SNAKE_WIDTH + 1;
+    if (direction == RIGHT){  
+		if (penalty == DIZZY){  //reverse direction if dizzy bomb is in effect
+			x -= SNAKE_WIDTH + 1;  
 			if (x < 112){ 
 				x = 912-SNAKE_WIDTH -1;
 			} 
@@ -209,7 +277,9 @@ void update_snake_coord() {
     update_head_coord();
 }
 
-void reverse_direction() {
+
+/* reverse direction of the snake */
+void reverse_direction() { 
     if (direction == RIGHT) {
         direction = LEFT;
     } else if (direction == LEFT) {
@@ -221,6 +291,7 @@ void reverse_direction() {
     }
 }
 
+/* update and display score*/
 void update_score(int x) {
     score += x;
     int temp = score;
@@ -232,6 +303,7 @@ void update_score(int x) {
     drawString_bg(238, 8, score_str, 0xFFFFFFFF, BACKGROUND_COLOR, 2);
 }
 
+/* update on-screen pause info */
 void update_pause_info() {
     drawRectARGB32(816,8,912,24,BACKGROUND_COLOR,1);
     if (p_state == PAUSE) {
@@ -239,6 +311,7 @@ void update_pause_info() {
     }
 }
 
+/* update on-screen bomb info */
 void update_bomb_info() {
     drawRectARGB32(416,8,550,24,BACKGROUND_COLOR,1);
     if (penalty == DIZZY) {
@@ -248,14 +321,17 @@ void update_bomb_info() {
     }
 }
 
-
+/* check if snake eats bomb or food */
 int snake_eat() {
-    if (food_x == x && food_y == y) {
+    /*  Increase snake length if it eats food, update score, and render new food. */
+    if (food_x == x && food_y == y) { 
         snake_length++;
         update_score(5);
         render_food();
-        if (penalty != NONE) {
+        if (penalty != NONE) { 
+            /* If penalty is in effect decrease the effect duration */
             penalty_effect_duration -= 1;
+            /* if penalty is no longer in effect reset penalty to None and reset penalty duration to 2 turns*/
             if (penalty == DIZZY && penalty_effect_duration == 0) {
                 penalty = NONE;
                 penalty_effect_duration = 2;
@@ -272,7 +348,7 @@ int snake_eat() {
             bomb_y = 0;
         } 
         return 1;
-    } else if (bomb_x == x && bomb_y == y) {
+    } else if (bomb_x == x && bomb_y == y) { //decrease score and update penalty when a bomb is eaten
         update_score(-5);
         penalty = rand(DIZZY, FAST+1);
         update_bomb_info();
@@ -287,7 +363,8 @@ int snake_eat() {
     return 0;
 }
 
-int snake_eat_self() {
+/* check if snake eats itself */
+int snake_eat_self() { 
     if (snake_length > 4) {
 		for (int i = 4; i < snake_length; i++) {
 			if ((snake_coord[i][0] == x) && (snake_coord[i][1] == y)) {
@@ -298,6 +375,11 @@ int snake_eat_self() {
 	return 0;
 }
 
+/* render snake by
+    1. check if snake eats food, if yes keep tail else clear tail
+    2. update new snake coordinates
+    3. render the head
+*/
 void render_snake() {
     if (!snake_eat()) {
         clear_tail();
@@ -306,24 +388,25 @@ void render_snake() {
     render_head();
 }
 
+/* handle control input from users*/
 void handle_control(char input) {
     switch(input) {
-        case 'w': 
+        case 'w': //up when snake is going right or left
             if(direction == RIGHT || direction == LEFT){
                 direction = UP;
             }
             break;
-        case 'a': 
+        case 'a': //left when snake is going up or down
             if(direction == UP || direction == DOWN){
                 direction = LEFT;
             }
             break;
-        case 's': 
+        case 's': //down when snake is going right or left
             if(direction == RIGHT || direction == LEFT){						
                 direction = DOWN;
             }
             break;
-        case 'd': 
+        case 'd': //right when snake is going right or left
             if(direction == UP || direction == DOWN){
                 direction = RIGHT;
             }
@@ -333,10 +416,12 @@ void handle_control(char input) {
     }
 }
 
+/* notify the user about in-game commands to pause and return to menu*/
 void display_notification() {
     drawString(152, 743, "Press p to pause/unpause, r to return to menu", 0x00FFFFFF, 2);
 }
 
+/* main program*/
 void run_snake() {
     clear_screen();
     char c;
