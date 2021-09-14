@@ -427,8 +427,10 @@ void display_notification() {
 }
 
 void handle_welcome_screen() {
+    //draw image
     draw_small_image(112, 34, TITLE_LOGO_WIDTH, TITLE_LOGO_HEIGHT, title_logo);
     draw_small_image(112, 334, SNAKE_LOGO_WIDTH, SNAKE_LOGO_HEIGHT, snake_logo);
+    //loading animation
     for (int i = 0; i < 3; i++) {
         drawString_bg(392, 710, "Loading...", BACKGROUND_COLOR, BOX_COLOR, 3);
         wait_msec(1000);
@@ -440,10 +442,12 @@ void handle_welcome_screen() {
 }
 
 int handle_main_menu() {
+    //display game title
     if (title_flag == 1) {
         draw_small_image(112, 34, TITLE_LOGO_WIDTH, TITLE_LOGO_HEIGHT, title_logo);
         title_flag = 0;
     }
+    //display menu options
     if (main_menu_flag) {
         if (option == PLAY) {
             drawString_bg(463, 354, "Play", SELECT_COLOR, BOX_COLOR, 3);
@@ -467,6 +471,7 @@ int handle_main_menu() {
     } 
     c = uart_getc();
     if (c == ' ') {
+        //go to next GUIDE state if press space when option is PLAY
         if (option == PLAY) {
             state = GUIDE;
             snake_speed = mode;
@@ -474,14 +479,14 @@ int handle_main_menu() {
             clear_screen();
             main_menu_flag = 1;
             title_flag = 1;
-        } else if (option == QUIT) {
+        } else if (option == QUIT) { //quit game
             drawRectARGB32(0, 0, 1023, 767, 0, 1);
             state = WELCOME;
             main_menu_flag = 1;
             title_flag = 1;
             return 1;
         }
-    } else if (c == 'w') {
+    } else if (c == 'w') { // W and S to change between options
         option -= 1;
         if (option < PLAY) {
             option = QUIT;
@@ -493,7 +498,7 @@ int handle_main_menu() {
             option = PLAY;
         }
         main_menu_flag = 1;
-    } else if (c == 'a' && option == DIFFICULTY) {
+    } else if (c == 'a' && option == DIFFICULTY) { //A and D to choose difficulty
         mode += 100;
         if (mode > EASY) {
             mode = HARD;
@@ -511,6 +516,7 @@ int handle_main_menu() {
 }
 
 void handle_guide() {
+    //display how to play screen
     if (guide_flag) {
         drawString_bg(336, 54, "How to play", BACKGROUND_COLOR, BOX_COLOR, 4);
         drawString_bg(290, 140, "W", BACKGROUND_COLOR, BOX_COLOR, 3);
@@ -541,11 +547,11 @@ void handle_gameplay() {
     while(1) {
         c = uart_getc();
         render_snake();
-        if (c == 'r') {
+        if (c == 'r') { //press r to return to main menu
             clear_screen();
             state = MAIN_MENU;
             break;
-        } else if (c == 'p' && p_state == UNPAUSE) {
+        } else if (c == 'p' && p_state == UNPAUSE) { //press p to pause/unpause
             p_state = PAUSE;
             update_pause_info();
             while (1) {
@@ -572,6 +578,7 @@ void handle_gameplay() {
 }
 
 void handle_endgame() {
+    //display gameover screen
     if (end_flag == 1) {
         drawString_bg(332, 104, "Game Over", BACKGROUND_COLOR, BOX_COLOR, 5);
         drawString_bg(336, 274, "Score:", 0, BOX_COLOR, 4);
