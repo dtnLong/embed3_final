@@ -581,12 +581,12 @@ void handle_gameplay() {
 void handle_endgame() {
     //display gameover screen
     if (end_flag == 1) {
-        drawString_bg(332, 134, "Game Over", BACKGROUND_COLOR, BOX_COLOR, 5);
-        drawString_bg(336, 304, "Score:", 0, BOX_COLOR, 4);
-        drawString_bg(560, 304, score_str, 0, BOX_COLOR, 4);
+        drawString_bg(260, 134, "Game Over", BACKGROUND_COLOR, BOX_COLOR, 7);
+        drawString_bg(336, 314, "Score:", 0, BOX_COLOR, 4);
+        drawString_bg(560, 314, score_str, 0, BOX_COLOR, 4);
         if (score > high_score) {
             high_score = score;
-            drawString_bg(296, 364, "Congrats, new high score!!!", BACKGROUND_COLOR, BOX_COLOR, 2);
+            drawString_bg(296, 384, "Congrats, new high score!!!", BACKGROUND_COLOR, BOX_COLOR, 2);
         } else {
             char high_score_str[4];
             int temp = high_score;
@@ -594,18 +594,18 @@ void handle_endgame() {
                 high_score_str[i] = temp % 10 + '0';
                 temp = temp / 10;
             } 
-            drawString_bg(384, 364, "High score:", BACKGROUND_COLOR, BOX_COLOR, 2);
-            drawString_bg(576, 364, high_score_str, BACKGROUND_COLOR, BOX_COLOR, 2);
+            drawString_bg(384, 384, "High score:", BACKGROUND_COLOR, BOX_COLOR, 2);
+            drawString_bg(576, 384, high_score_str, BACKGROUND_COLOR, BOX_COLOR, 2);
         }
 
         end_flag = 0;
     }
     if (go_option == PLAY_AGAIN) {
-        drawString_bg(182, 470, "Play Again", SELECT_COLOR, BOX_COLOR, 3);
-        drawString_bg(598, 470, "Main Menu", 0, BOX_COLOR, 3);
+        drawString_bg(182, 540, "Play Again", SELECT_COLOR, BOX_COLOR, 3);
+        drawString_bg(598, 540, "Main Menu", 0, BOX_COLOR, 3);
     } else if (go_option == MENU) {
-        drawString_bg(182, 470, "Play Again", 0, BOX_COLOR, 3);
-        drawString_bg(598, 470, "Main Menu", SELECT_COLOR, BOX_COLOR, 3);
+        drawString_bg(182, 540, "Play Again", 0, BOX_COLOR, 3);
+        drawString_bg(598, 540, "Main Menu", SELECT_COLOR, BOX_COLOR, 3);
     }
     c = uart_getc();
     if (c == ' ') {
