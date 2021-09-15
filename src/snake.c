@@ -19,6 +19,7 @@
 #define BOX_COLOR 0x00e1e4ed
 #define FRUIT_COLOR 0x00f04848
 #define SELECT_COLOR 0x009f3eb8
+#define SNAKE_COLOR 0x00ff8c00
 
 
 /* Game states: 
@@ -199,7 +200,7 @@ void initialize_game() {
 
 /* Render new snake head when it mvoves*/
 void render_head() {
-    drawRectARGB32(snake_coord[0][0],snake_coord[0][1],snake_coord[0][0] + SNAKE_WIDTH, snake_coord[0][1] + SNAKE_WIDTH, 0x00ff8c00, 1);
+    drawRectARGB32(snake_coord[0][0],snake_coord[0][1],snake_coord[0][0] + SNAKE_WIDTH, snake_coord[0][1] + SNAKE_WIDTH, SNAKE_COLOR, 1);
 }
 
 /* clear tail when snake moves */
@@ -580,12 +581,12 @@ void handle_gameplay() {
 void handle_endgame() {
     //display gameover screen
     if (end_flag == 1) {
-        drawString_bg(332, 104, "Game Over", BACKGROUND_COLOR, BOX_COLOR, 5);
-        drawString_bg(336, 274, "Score:", 0, BOX_COLOR, 4);
-        drawString_bg(560, 274, score_str, 0, BOX_COLOR, 4);
+        drawString_bg(332, 134, "Game Over", BACKGROUND_COLOR, BOX_COLOR, 5);
+        drawString_bg(336, 304, "Score:", 0, BOX_COLOR, 4);
+        drawString_bg(560, 304, score_str, 0, BOX_COLOR, 4);
         if (score > high_score) {
             high_score = score;
-            drawString_bg(296, 334, "Congrats, new high score!!!", BACKGROUND_COLOR, BOX_COLOR, 2);
+            drawString_bg(296, 364, "Congrats, new high score!!!", BACKGROUND_COLOR, BOX_COLOR, 2);
         } else {
             char high_score_str[4];
             int temp = high_score;
@@ -593,8 +594,8 @@ void handle_endgame() {
                 high_score_str[i] = temp % 10 + '0';
                 temp = temp / 10;
             } 
-            drawString_bg(384, 334, "High score:", BACKGROUND_COLOR, BOX_COLOR, 2);
-            drawString_bg(576, 334, high_score_str, BACKGROUND_COLOR, BOX_COLOR, 2);
+            drawString_bg(384, 364, "High score:", BACKGROUND_COLOR, BOX_COLOR, 2);
+            drawString_bg(576, 364, high_score_str, BACKGROUND_COLOR, BOX_COLOR, 2);
         }
 
         end_flag = 0;
