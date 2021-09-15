@@ -91,9 +91,9 @@ int penalty_effect_duration = 2;
 char c;
 
 /* reset game screen for screen transition */
-void clear_screen() {
+void setup_screen() {
     drawRectARGB32(0,0,1023,767,BACKGROUND_COLOR,1); //draw background
-  	drawRectARGB32(111,33,912,734,BOX_COLOR,1); //draw inner box
+  	drawRectARGB32(112,34,911,733,BOX_COLOR,1); //draw inner box
 }
 
 /* update head coordinates */
@@ -438,7 +438,7 @@ void handle_welcome_screen() {
         wait_msec(500);
     }
     state = MAIN_MENU;
-    clear_screen();
+    setup_screen();
 }
 
 int handle_main_menu() {
@@ -473,16 +473,16 @@ int handle_main_menu() {
     if (c == ' ') {
         //go to next GUIDE state if press space when option is PLAY
         if (option == PLAY) {
-            state = GUIDE;
+            state = GUIDE; //go to next state
             snake_speed = mode;
             drawRectARGB32(328, 310, 696, 326, BOX_COLOR, 1);
-            clear_screen();
+            setup_screen(); //reset render flags
             main_menu_flag = 1;
             title_flag = 1;
         } else if (option == QUIT) { //quit game
             drawRectARGB32(0, 0, 1023, 767, 0, 1);
-            state = WELCOME;
-            main_menu_flag = 1;
+            state = WELCOME; //reset state before exiting
+            main_menu_flag = 1; //reset render flags
             title_flag = 1;
             return 1;
         }
@@ -536,7 +536,7 @@ void handle_guide() {
     c = uart_getc();
     if (c == ' ') {
         state = GAMEPLAY;
-        clear_screen();
+        setup_screen();
         guide_flag = 1;
     }
 }
@@ -548,7 +548,7 @@ void handle_gameplay() {
         c = uart_getc();
         render_snake();
         if (c == 'r') { //press r to return to main menu
-            clear_screen();
+            setup_screen();
             state = MAIN_MENU;
             break;
         } else if (c == 'p' && p_state == UNPAUSE) { //press p to pause/unpause
@@ -569,7 +569,7 @@ void handle_gameplay() {
             render_bomb();
         }
         if (snake_eat_self()) {
-            clear_screen();
+            setup_screen();
             state = END;
             break;
         } 
@@ -609,10 +609,10 @@ void handle_endgame() {
     c = uart_getc();
     if (c == ' ') {
         if (go_option == PLAY_AGAIN) {
-            clear_screen();
+            setup_screen();
             state = GAMEPLAY;
         } else if (go_option == MENU) {
-            clear_screen();
+            setup_screen();
             state = MAIN_MENU;
         }
         end_flag = 1;
@@ -633,7 +633,7 @@ void handle_endgame() {
 
 /* main program*/
 void run_snake() {
-    clear_screen();
+    setup_screen();
     while(1) {
         switch(state) {
             case WELCOME: 
