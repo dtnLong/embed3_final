@@ -99,10 +99,10 @@ void framebf_init(int width, int heigth) {
 void drawPixelARGB32(int x, int y, unsigned int attr) {
     int offs = (y * pitch) + (COLOR_DEPTH/8 * x);
     //Access and assign each byte
-    /**(fb + offs ) = (attr >> 0 ) & 0xFF; //BLUE
-    *(fb + offs + 1) = (attr >> 8 ) & 0xFF; //GREEN
-    *(fb + offs + 2) = (attr >> 16) & 0xFF; //RED
-    *(fb + offs + 3) = (attr >> 24) & 0xFF; //ALPHA*/
+    // *(fb + offs ) = (attr >> 0 ) & 0xFF; //BLUE
+    // *(fb + offs + 1) = (attr >> 8 ) & 0xFF; //GREEN
+    // *(fb + offs + 2) = (attr >> 16) & 0xFF; //RED
+    // *(fb + offs + 3) = (attr >> 24) & 0xFF; //ALPHA
     //Access 32-bit together
     *((unsigned int*)(fb + offs)) = attr;
 }
@@ -393,30 +393,31 @@ void draw_large_image(int x, int y) {
     int start_y = 0;
     int end_y = LARGE_IMG_HEIGHT;
 
-    // Clear image artifact left behind on the screen when scrolling
-    if (y < 0) {
-        drawRectARGB32(0, y + LARGE_IMG_HEIGHT, scr_width, scr_height, default_background_color, 1);
-    } else if (y + LARGE_IMG_HEIGHT > scr_height) {
-        drawRectARGB32(0, 0, scr_width, y, default_background_color, 1);
+    // When the bottom y of the image is larger than current screen height, the bottom of the image is cut off,
+    // so draw the image to y cut off of the image which is: screen height - y
+    if (y + LARGE_IMG_HEIGHT > scr_height) {
+        end_y = scr_height - y;
     }
 
     // When y is smaller than 0, the top of the image is cut off,
-    // so draw the image from the y cut off of the image which is: -1 * y, to the image height
+    // so draw the image from the y cut off of the image which is: -1 * y
     if (y < 0) {
         start_y = -1 * y;
-        y = 0;
-        end_y = LARGE_IMG_HEIGHT;
-    // When the bottom y of the image is larger than current screen height, the bottom of the image is cut off,
-    // so draw the image from y = 0 of the image to y cut off of the image which is: screen height - y
-    } else if (y + LARGE_IMG_HEIGHT > scr_height) {
-        start_y = 0;
-        end_y = scr_height - y;
     }
 
     for (int i = start_y; i < end_y; i++) {
         for (int j = 0; j < LARGE_IMG_WIDTH; j++) {
-            drawPixelARGB32(x + j, y + i - start_y, large_img[LARGE_IMG_WIDTH * i + j]);
+            drawPixelARGB32(x + j, y + i, large_img[LARGE_IMG_WIDTH * i + j]);
         }
+    }
+}
+
+void clear_scroll_artifact(int x, int y) {
+    // Clear image artifact left behind on the screen when scrolling
+    if (y > 0) {
+        drawRectARGB32(x, 0, x + LARGE_IMG_WIDTH, y, default_background_color, 1);
+    } else if (y + LARGE_IMG_HEIGHT < scr_height) {
+        drawRectARGB32(x, y + LARGE_IMG_HEIGHT, x + LARGE_IMG_WIDTH, scr_height, default_background_color, 1);
     }
 }
 
@@ -441,6 +442,7 @@ void image_viewer(int x, int y) {
         if (option == 'w') {
             if (y < 0) {
                 y += 10;
+                clear_scroll_artifact(x, y);
                 draw_large_image(x, y);
             }
         // When scrolling down, the image will move up so y decrease
@@ -449,6 +451,7 @@ void image_viewer(int x, int y) {
         } else if (option == 's') {
             if (y + LARGE_IMG_HEIGHT > scr_height) {
                 y -= 10;
+                clear_scroll_artifact(x, y);
                 draw_large_image(x, y);
             }
         }
