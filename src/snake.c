@@ -181,6 +181,10 @@ void render_bomb() {
 void initialize_game() {
     score = 0;
 	snake_length = 3; //initial snake length
+    snake_speed = mode; //initial snake speed
+    penalty = NONE; //no penalty
+    penalty_turn = -1, prev_penalty_turn = -1;
+    penalty_effect_duration = 2;
 	x = 512; //default x 
 	y = 374; //default y
     direction = RIGHT; //intial direction
